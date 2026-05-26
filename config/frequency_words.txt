@@ -23,7 +23,6 @@ GPT-4
 GPT-5
 Sora
 Claude
-Codex
 Gemini
 DeepSeek
 通义
