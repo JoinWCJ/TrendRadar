@@ -124,7 +124,7 @@ presets:
     default:
       collect: true                # 采集数据（爬取热榜 + RSS）
       analyze: false               # 不做 AI 分析（节省 API 费用）
-      ai_mode: "current"           # AI 分析当前榜单
+      ai_mode: "daily"           # AI 分析当前榜单
       push: true                   # 有新内容就推送
       report_mode: "incremental"   # 只推送新增内容，避免重复
       once:                        # 限制每个时间段内只执行一次
@@ -166,9 +166,9 @@ presets:
     default:
       collect: true                # 始终采集
       analyze: true                # AI 分析当前榜单
-      ai_mode: "current"           # AI 分析当前榜单
+      ai_mode: "daily"           # AI 分析当前榜单
       push: true                   # 每次推送当前在榜热点
-      report_mode: "current"       # 当前在榜的新闻
+      report_mode: "daily"       # 当前在榜的新闻
       # frequency_file: "xxx.txt"               # 关键词文件（可选，位于 config/custom/keyword/）
       # interests_file: "xxx.txt"                # AI 兴趣文件（可选，位于 config/custom/ai/）
       # filter_method: "keyword"                # 筛选策略（可选: keyword | ai，不填用全局 filter.method）
@@ -268,7 +268,7 @@ presets:
         name: "周末自由"
         start: "08:00"
         end: "23:00"
-        ai_mode: "current"         # AI 分析当前榜单
+        ai_mode: "daily"         # AI 分析当前榜单
         push: true                 # 有新增就推送
         report_mode: "incremental" # 增量模式：有新增才推，没有就安静
         once:
@@ -407,13 +407,13 @@ custom:
   默认:
     collect: true                  # 是否采集数据（爬取热榜 + RSS）
     analyze: false                 # 是否执行 AI 分析
-    ai_mode: "current"            # AI 分析模式:
+    ai_mode: "daily"            # AI 分析模式:
                                    #   follow_report → 跟随 report_mode
                                    #   daily         → 强制全天汇总
                                    #   current       → 强制当前榜单
                                    #   incremental   → 强制增量模式
     push: false                    # 是否发送推送通知
-    report_mode: "current"         # 报告模式:
+    report_mode: "daily"         # 报告模式:
                                    #   daily       → 当日所有新闻的汇总
                                    #   current     → 当前在榜的新闻
                                    #   incremental → 只推送新增内容
