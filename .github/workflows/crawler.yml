@@ -133,13 +133,51 @@ jobs:
             exit 1
           fi
 
+      # --------------------------------------------------------------------------------
+      # 🔐 DINGTALK SIGNATURE / 钉钉加签
+      # --------------------------------------------------------------------------------
+      # EN: If DINGTALK_SECRET is set, generates HMAC-SHA256 signature and appends
+      #     timestamp + sign to the webhook URL. If no secret, URL is used as-is.
+      #
+      # CN: 若配置了 DINGTALK_SECRET，则生成 HMAC-SHA256 签名并将
+      #     timestamp 和 sign 追加到 Webhook URL 中。未配置则直接使用原始 URL。
+      #
+      # 📌 Secrets needed / 需要配置的 Secrets:
+      #    - DINGTALK_WEBHOOK_URL : 机器人 Webhook 地址（必填）
+      #    - DINGTALK_WEBHOOK_SECRETS : 机器人加签密钥，SEC 开头（开启加签时必填）
+      # --------------------------------------------------------------------------------
+      - name: Generate DingTalk Signature
+        if: success()
+        env:
+          DINGTALK_WEBHOOK_URL: ${{ secrets.DINGTALK_WEBHOOK_URL }}
+          DINGTALK_SECRET: ${{ secrets.DINGTALK_WEBHOOK_SECRETS }}
+        run: |
+          if [ -n "$DINGTALK_SECRET" ] && [ -n "$DINGTALK_WEBHOOK_URL" ]; then
+            echo "🔐 钉钉加签模式 / DingTalk sign mode enabled"
+            TIMESTAMP=$(date +%s%3N)
+            # 签名字符串 = timestamp + "\n" + secret，使用 HMAC-SHA256 加密后 Base64 编码再 URL 编码
+            SIGN=$(printf '%s\n%s' "$TIMESTAMP" "$DINGTALK_SECRET" \
+              | openssl dgst -sha256 -hmac "$DINGTALK_SECRET" -binary \
+              | base64 -w 0 \
+              | python3 -c "import sys, urllib.parse; print(urllib.parse.quote(sys.stdin.read().strip()))")
+            SIGNED_URL="${DINGTALK_WEBHOOK_URL}&timestamp=${TIMESTAMP}&sign=${SIGN}"
+            echo "✅ 签名生成成功 / Signature generated"
+            # 将签名后的 URL 写入环境变量供后续步骤使用
+            echo "DINGTALK_SIGNED_URL=${SIGNED_URL}" >> "$GITHUB_ENV"
+          else
+            echo "ℹ️  未配置 DINGTALK_SECRET，使用原始 URL / No secret, using raw URL"
+            echo "DINGTALK_SIGNED_URL=${DINGTALK_WEBHOOK_URL}" >> "$GITHUB_ENV"
+          fi
+
       - name: Run crawler
         if: success()
         env:
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          DINGTALK_WEBHOOK_URL: ${{ secrets.DINGTALK_WEBHOOK_URL }}
+          # 使用加签后的 URL（无 Secret 时退回原始 URL）
+          # Use signed URL (falls back to raw URL when no secret configured)
+          DINGTALK_WEBHOOK_URL: ${{ env.DINGTALK_SIGNED_URL }}
           WEWORK_WEBHOOK_URL: ${{ secrets.WEWORK_WEBHOOK_URL }}
           WEWORK_MSG_TYPE: ${{ secrets.WEWORK_MSG_TYPE }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
